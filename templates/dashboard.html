@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PharmaTwin — Pharma Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0e14; --bg2: #0f1520; --bg3: #151d2b; --bg4: #1a2333;
+  --card: #111827; --border: rgba(99,179,237,0.12); --border2: rgba(99,179,237,0.22);
+  --text: #e8edf5; --text2: #8fa3bf; --text3: #5a7494;
+  --accent: #38bdf8; --teal: #2dd4bf; --gold: #f59e0b;
+  --red: #f87171; --green: #4ade80; --purple: #a78bfa; --coral: #fb923c;
+  --font-display: 'DM Serif Display', serif;
+  --font-body: 'Outfit', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 2.5rem; border-bottom: 1px solid var(--border);
+  background: rgba(10,14,20,0.95); backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--teal));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: #0a0e14;
+}
+.logo-text { font-family: var(--font-display); font-size: 1.3rem; }
+.logo-text span { color: var(--accent); }
+.nav-badge {
+  background: rgba(167,139,250,0.12); border: 1px solid rgba(167,139,250,0.25);
+  color: var(--purple); font-size: 0.7rem; font-family: var(--font-mono);
+  padding: 3px 10px; border-radius: 100px; letter-spacing: 0.08em;
+}
+.nav-links { display: flex; gap: 1.5rem; align-items: center; }
+.nav-links a { color: var(--text2); text-decoration: none; font-size: 0.875rem; transition: color 0.2s; }
+.nav-links a:hover { color: var(--accent); }
+
+.layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 65px); }
+.sidebar {
+  background: var(--bg2); border-right: 1px solid var(--border);
+  padding: 1.5rem 1rem;
+}
+.sidebar-section { margin-bottom: 1.5rem; }
+.sidebar-label {
+  font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.15em;
+  color: var(--text3); text-transform: uppercase; padding: 0 0.5rem; margin-bottom: 0.5rem;
+}
+.med-btn {
+  width: 100%; text-align: left; padding: 0.65rem 0.75rem;
+  background: none; border: none; border-radius: 8px; cursor: pointer;
+  font-family: var(--font-body); font-size: 0.82rem; color: var(--text2);
+  transition: background 0.15s, color 0.15s; display: block; margin-bottom: 2px;
+}
+.med-btn:hover { background: var(--bg3); color: var(--text); }
+.med-btn.active { background: rgba(56,189,248,0.1); color: var(--accent); }
+.med-btn small { display: block; font-size: 0.7rem; color: var(--text3); margin-top: 2px; }
+
+.main { padding: 2rem; overflow-y: auto; }
+.page-header { margin-bottom: 2rem; }
+.page-header h2 { font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 0.25rem; }
+.page-header p { color: var(--text2); font-size: 0.875rem; }
+
+.kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+.kpi {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 1.1rem 1.2rem;
+}
+.kpi-label { font-size: 0.72rem; color: var(--text3); margin-bottom: 0.4rem; font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; }
+.kpi-val { font-family: var(--font-display); font-size: 2rem; line-height: 1; }
+.kpi-sub { font-size: 0.72rem; color: var(--text3); margin-top: 4px; }
+.c-red { color: var(--red); } .c-gold { color: var(--gold); } .c-green { color: var(--green); } .c-accent { color: var(--accent); }
+
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+}
+.card-header {
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.card-header h3 { font-size: 0.875rem; font-weight: 500; }
+.card-header span { font-size: 0.72rem; color: var(--text3); font-family: var(--font-mono); }
+.card-body { padding: 1.25rem; }
+.chart-wrap { position: relative; height: 200px; }
+
+.heatmap-grid { display: flex; flex-direction: column; gap: 0.55rem; }
+.heatmap-row { display: flex; align-items: center; gap: 10px; }
+.heatmap-label { font-size: 0.76rem; color: var(--text2); width: 170px; flex-shrink: 0; }
+.heatmap-bar-wrap { flex: 1; background: var(--bg3); border-radius: 4px; height: 20px; overflow: hidden; }
+.heatmap-bar {
+  height: 100%; border-radius: 4px; display: flex; align-items: center;
+  padding-left: 8px; font-size: 0.68rem; font-family: var(--font-mono); font-weight: 500;
+  color: #0a0e14; transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+.heatmap-val { font-family: var(--font-mono); font-size: 0.72rem; min-width: 36px; text-align: right; }
+
+.insight-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.insight-item {
+  background: var(--bg3); border-radius: 9px; padding: 0.8rem 1rem;
+  border-left: 3px solid var(--gold); font-size: 0.82rem; line-height: 1.5; color: var(--text2);
+}
+.insight-item.critical { border-left-color: var(--red); }
+.insight-item.positive { border-left-color: var(--green); }
+.insight-item strong { color: var(--text); }
+
+.pkg-list { display: flex; flex-direction: column; gap: 0.55rem; }
+.pkg-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--bg3); border-radius: 8px; padding: 0.75rem;
+  font-size: 0.8rem; color: var(--text2); line-height: 1.5;
+}
+.pkg-num {
+  font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent);
+  background: rgba(56,189,248,0.08); border-radius: 4px; padding: 2px 7px;
+  flex-shrink: 0; margin-top: 1px;
+}
+
+.full-width { grid-column: 1 / -1; }
+.loading-overlay {
+  display: flex; align-items: center; justify-content: center;
+  padding: 3rem; color: var(--text3);
+}
+.spinner {
+  width: 28px; height: 28px; border: 2px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.7s linear infinite; margin-right: 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.risk-tag {
+  font-family: var(--font-mono); font-size: 0.65rem; padding: 2px 8px;
+  border-radius: 100px; display: inline-block; margin-left: 6px;
+}
+.risk-critical { background: rgba(248,113,113,0.15); color: var(--red); }
+.risk-high { background: rgba(248,113,113,0.1); color: var(--coral); }
+.risk-medium { background: rgba(245,158,11,0.1); color: var(--gold); }
+.risk-low { background: rgba(74,222,128,0.08); color: var(--green); }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">
+    <div class="logo-mark">Φ</div>
+    <span class="logo-text">Pharma<span>Twin</span></span>
+    <span class="nav-badge">PHARMA PORTAL</span>
+  </div>
+  <div class="nav-links">
+    <a href="/">← Simulator</a>
+    <a href="#">Export Report</a>
+    <a href="#">API Access</a>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Medications</div>
+      {% for key, med in medications.items() %}
+      <button class="med-btn {% if loop.first %}active{% endif %}" onclick="loadMedication('{{ key }}', this)">
+        {{ med.name }}
+        <small>{{ med.type }}</small>
+      </button>
+      {% endfor %}
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Modules</div>
+      <button class="med-btn active">Overview</button>
+      <button class="med-btn">Adherence Analytics</button>
+      <button class="med-btn">Cultural Segments</button>
+      <button class="med-btn">Packaging Intel</button>
+      <button class="med-btn">API Export</button>
+    </div>
+  </aside>
+
+  <main class="main" id="main-content">
+    <div class="loading-overlay" id="dash-loading">
+      <div class="spinner"></div> Loading medication intelligence...
+    </div>
+    <div id="dash-content" style="display:none;">
+      <div class="page-header">
+        <h2 id="med-title">—</h2>
+        <p id="med-subtitle">—</p>
+      </div>
+
+      <div class="kpi-strip">
+        <div class="kpi">
+          <div class="kpi-label">Avg. Adherence</div>
+          <div class="kpi-val c-gold" id="kpi-adherence">—</div>
+          <div class="kpi-sub">Across all profiles</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Highest Risk Group</div>
+          <div class="kpi-val" style="font-size:1rem; padding-top:0.5rem;" id="kpi-risk-group">—</div>
+          <div class="kpi-sub" id="kpi-risk-pct">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Food Sensitive</div>
+          <div class="kpi-val" id="kpi-food">—</div>
+          <div class="kpi-sub">Requires meal timing</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Half-Life</div>
+          <div class="kpi-val c-accent" id="kpi-halflife">—</div>
+          <div class="kpi-sub">Hours in bloodstream</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-header"><h3>Demographic Adherence Heatmap</h3><span>REAL-WORLD FRICTION</span></div>
+          <div class="card-body">
+            <div class="heatmap-grid" id="dash-heatmap"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>Adherence Distribution</h3><span>BY LIFESTYLE GROUP</span></div>
+          <div class="card-body">
+            <div class="chart-wrap">
+              <canvas id="dist-chart" role="img" aria-label="Bar chart showing adherence by demographic group"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>Behavioral Insights</h3><span>AI-GENERATED INTELLIGENCE</span></div>
+          <div class="card-body">
+            <div class="insight-list" id="insight-list"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>Packaging Recommendations</h3><span>DELIVERY OPTIMIZATION</span></div>
+          <div class="card-body">
+            <div class="pkg-list" id="dash-pkg-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+let distChart = null;
+
+function getRiskClass(risk) {
+  return { critical: 'risk-critical', high: 'risk-high', medium: 'risk-medium', low: 'risk-low' }[risk] || 'risk-medium';
+}
+
+function getBarColor(pct) {
+  return pct >= 75 ? '#4ade80' : pct >= 60 ? '#f59e0b' : '#f87171';
+}
+
+const INSIGHTS = {
+  metformin: [
+    { cls: 'critical', text: '<strong>Night shift workers</strong> skip Dose 2 in 43% of cases — dosing falls inside their sleep window post-shift.' },
+    { cls: '', text: '<strong>Ramadan observers</strong> on Metformin face critical timing instability — food-sensitive dosing conflicts directly with fasting windows.' },
+    { cls: '', text: '<strong>Students during exams</strong> show 22% drop in adherence. Stress-driven forgetting and diet irregularity are primary drivers.' },
+    { cls: 'positive', text: '<strong>Retirees</strong> show strongest adherence (81%) — consistent daily routine reduces dose forgetting significantly.' },
+  ],
+  sertraline: [
+    { cls: 'critical', text: '<strong>Students</strong> are most likely to self-discontinue during exam periods — anxiety symptoms misattributed to medication.' },
+    { cls: '', text: '<strong>Heavy alcohol consumers</strong> show dangerous interaction patterns with SSRIs — CNS depression risk underreported.' },
+    { cls: '', text: '<strong>Night shift workers</strong> struggle with consistent dosing time — circadian disruption affects drug metabolism timing.' },
+    { cls: 'positive', text: 'Long half-life (26h) provides some buffer — missed single doses are less clinically impactful than shorter half-life drugs.' },
+  ],
+  sumatriptan: [
+    { cls: 'critical', text: '<strong>Gamers and screen-heavy users</strong> take it too late — delay between aura onset and dosing reduces efficacy by up to 40%.' },
+    { cls: '', text: '<strong>Nurses and shift workers</strong> often forget to carry the medication — "as needed" drugs are left at home more often.' },
+    { cls: '', text: '<strong>Students</strong> combine with energy drinks — caffeine interaction is underestimated and increases anxiety side effects.' },
+    { cls: 'positive', text: 'Low adherence complexity (PRN dosing) — the challenge is availability and timing, not daily regimen compliance.' },
+  ],
+  lisinopril: [
+    { cls: '', text: '<strong>Frequent travelers</strong> miss doses due to time zone confusion — morning-anchored drugs are disrupted by east-west travel.' },
+    { cls: '', text: '<strong>Heavy NSAID users</strong> (athletes, office workers) unknowingly create dangerous interactions — education gap detected.' },
+    { cls: '', text: '<strong>High potassium diet</strong> patients (athletes eating clean) risk hyperkalemia — nutrition-drug interaction is poorly communicated.' },
+    { cls: 'positive', text: '<strong>Remote workers</strong> show stable adherence — home routine consistency benefits once-daily morning medications.' },
+  ],
+  levothyroxine: [
+    { cls: 'critical', text: '<strong>Coffee drinkers</strong> absorb 25-36% less Levothyroxine when taken with coffee — a widely ignored interaction.' },
+    { cls: 'critical', text: '<strong>Fasting observers (Ramadan)</strong> often take it incorrectly with the pre-dawn meal — calcium in food blocks absorption.' },
+    { cls: '', text: '<strong>Students</strong> skip the 30-60 minute pre-meal window — rushing in the morning leads to simultaneous food+pill intake.' },
+    { cls: 'positive', text: 'Once-daily dosing is an advantage — but the 30-60 minute empty-stomach requirement creates friction for active lifestyle groups.' },
+  ],
+};
+
+function loadMedication(medId, btn) {
+  document.querySelectorAll('.med-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('dash-loading').style.display = 'flex';
+  document.getElementById('dash-content').style.display = 'none';
+
+  fetch('/api/medication/' + medId + '/overview')
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('dash-loading').style.display = 'none';
+      document.getElementById('dash-content').style.display = 'block';
+      renderDashboard(medId, data);
+    });
+}
+
+function renderDashboard(medId, data) {
+  const med = data.medication;
+  document.getElementById('med-title').textContent = med.name;
+  document.getElementById('med-subtitle').textContent = med.type + ' · ' + med.dosing;
+  document.getElementById('kpi-adherence').textContent = data.average_adherence + '%';
+  document.getElementById('kpi-risk-group').textContent = data.highest_risk_group;
+  document.getElementById('kpi-food').textContent = med.food_sensitive ? '⚠ Yes' : '✓ No';
+  document.getElementById('kpi-food').className = 'kpi-val ' + (med.food_sensitive ? 'c-red' : 'c-green');
+  document.getElementById('kpi-halflife').textContent = med.half_life + 'h';
+
+  const riskItem = data.heatmap.find(h => h.group === data.highest_risk_group);
+  document.getElementById('kpi-risk-pct').textContent = riskItem ? riskItem.adherence + '% adherence' : '—';
+
+  // Heatmap
+  const hm = document.getElementById('dash-heatmap');
+  hm.innerHTML = '';
+  data.heatmap.forEach(item => {
+    const pct = item.adherence;
+    const col = getBarColor(pct);
+    const riskCls = getRiskClass(item.risk);
+    hm.innerHTML += `
+      <div class="heatmap-row">
+        <span class="heatmap-label">${item.group}<span class="risk-tag ${riskCls}">${item.risk}</span></span>
+        <div class="heatmap-bar-wrap">
+          <div class="heatmap-bar" style="width:${pct}%;background:${col};">${pct >= 30 ? pct + '%' : ''}</div>
+        </div>
+        <span class="heatmap-val" style="color:${col}">${pct}%</span>
+      </div>`;
+  });
+
+  // Distribution chart
+  if (distChart) distChart.destroy();
+  const labels = data.heatmap.map(h => h.group.split(' ').slice(0, 2).join(' '));
+  const vals = data.heatmap.map(h => h.adherence);
+  const colors = vals.map(v => getBarColor(v));
+  distChart = new Chart(document.getElementById('dist-chart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'Adherence %', data: vals, backgroundColor: colors, borderRadius: 5, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min: 0, max: 100, ticks: { color: '#5a7494', font: { size: 10 } }, grid: { color: 'rgba(99,179,237,0.06)' } },
+        x: { ticks: { color: '#5a7494', font: { size: 9 }, maxRotation: 35 }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Insights
+  const il = document.getElementById('insight-list');
+  il.innerHTML = '';
+  const insights = INSIGHTS[medId] || [];
+  insights.forEach(ins => {
+    il.innerHTML += `<div class="insight-item ${ins.cls}">${ins.text}</div>`;
+  });
+
+  // Packaging
+  const pl = document.getElementById('dash-pkg-list');
+  pl.innerHTML = '';
+  data.packaging_recommendations.forEach((rec, i) => {
+    pl.innerHTML += `<div class="pkg-item"><span class="pkg-num">0${i+1}</span><span>${rec}</span></div>`;
+  });
+}
+
+// Load first medication on page load
+window.addEventListener('DOMContentLoaded', () => {
+  const firstBtn = document.querySelector('.med-btn');
+  if (firstBtn) loadMedication('metformin', firstBtn);
+});
+</script>
+</body>
+</html>

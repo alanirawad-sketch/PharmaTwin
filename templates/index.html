@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PharmaTwin — Medication Reality Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0e14;
+  --bg2: #0f1520;
+  --bg3: #151d2b;
+  --bg4: #1a2333;
+  --card: #111827;
+  --border: rgba(99,179,237,0.12);
+  --border2: rgba(99,179,237,0.22);
+  --text: #e8edf5;
+  --text2: #8fa3bf;
+  --text3: #5a7494;
+  --accent: #38bdf8;
+  --accent2: #0ea5e9;
+  --teal: #2dd4bf;
+  --gold: #f59e0b;
+  --red: #f87171;
+  --green: #4ade80;
+  --purple: #a78bfa;
+  --coral: #fb923c;
+  --font-display: 'DM Serif Display', serif;
+  --font-body: 'Outfit', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; overflow-x: hidden; }
+
+/* Nav */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 2.5rem; border-bottom: 1px solid var(--border);
+  background: rgba(10,14,20,0.9); backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--teal));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: #0a0e14;
+}
+.logo-text { font-family: var(--font-display); font-size: 1.3rem; color: var(--text); }
+.logo-text span { color: var(--accent); }
+.nav-links { display: flex; gap: 2rem; }
+.nav-links a { color: var(--text2); text-decoration: none; font-size: 0.875rem; font-weight: 400; transition: color 0.2s; }
+.nav-links a:hover { color: var(--accent); }
+.nav-cta {
+  background: var(--accent); color: #0a0e14; padding: 0.5rem 1.25rem;
+  border-radius: 6px; font-weight: 500; font-size: 0.875rem; text-decoration: none;
+  transition: opacity 0.2s;
+}
+.nav-cta:hover { opacity: 0.85; }
+
+/* Hero */
+.hero {
+  text-align: center; padding: 5rem 2rem 3rem;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+  width: 800px; height: 500px;
+  background: radial-gradient(ellipse at center, rgba(56,189,248,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2);
+  padding: 0.35rem 0.9rem; border-radius: 100px; font-size: 0.75rem;
+  font-family: var(--font-mono); color: var(--accent); margin-bottom: 1.5rem;
+  letter-spacing: 0.05em;
+}
+.hero-badge::before { content: '●'; font-size: 8px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+h1 {
+  font-family: var(--font-display); font-size: clamp(2.5rem, 5vw, 4rem);
+  line-height: 1.1; margin-bottom: 1.25rem; max-width: 780px; margin-left: auto; margin-right: auto;
+}
+h1 em { font-style: italic; color: var(--accent); }
+.hero-sub {
+  color: var(--text2); font-size: 1.1rem; max-width: 560px;
+  margin: 0 auto 2.5rem; line-height: 1.7; font-weight: 300;
+}
+.hero-stats {
+  display: flex; justify-content: center; gap: 3rem; margin: 2rem 0 3rem;
+  flex-wrap: wrap;
+}
+.stat { text-align: center; }
+.stat-num { font-family: var(--font-display); font-size: 2.2rem; color: var(--accent); }
+.stat-label { font-size: 0.8rem; color: var(--text3); font-weight: 400; margin-top: 2px; }
+
+/* Simulator */
+.simulator-wrap { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+.section-label {
+  font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.15em;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 0.75rem;
+}
+.section-title {
+  font-family: var(--font-display); font-size: 2rem; margin-bottom: 0.5rem;
+}
+.section-sub { color: var(--text2); font-size: 0.95rem; margin-bottom: 2.5rem; font-weight: 300; }
+
+.sim-grid { display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; }
+@media (max-width: 900px) { .sim-grid { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden;
+}
+.panel-header {
+  padding: 1.1rem 1.4rem; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.panel-header h3 { font-size: 0.9rem; font-weight: 500; color: var(--text); }
+.panel-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.panel-body { padding: 1.4rem; }
+
+/* Form elements */
+.form-group { margin-bottom: 1.1rem; }
+.form-label {
+  display: block; font-size: 0.8rem; color: var(--text2);
+  margin-bottom: 0.4rem; font-weight: 400;
+}
+.form-select, .form-input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0.6rem 0.9rem; color: var(--text);
+  font-family: var(--font-body); font-size: 0.875rem;
+  appearance: none; -webkit-appearance: none; outline: none;
+  transition: border-color 0.2s;
+}
+.form-select:focus, .form-input:focus { border-color: var(--accent2); }
+.form-select option { background: var(--bg2); }
+
+.range-row { display: flex; align-items: center; gap: 10px; }
+.range-val {
+  font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent);
+  min-width: 28px; text-align: right;
+}
+input[type=range] {
+  flex: 1; appearance: none; height: 4px; background: var(--bg4);
+  border-radius: 2px; outline: none; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  appearance: none; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--accent); cursor: pointer;
+}
+
+.toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; }
+.toggle-label { font-size: 0.8rem; color: var(--text2); }
+.toggle {
+  position: relative; width: 38px; height: 21px;
+  background: var(--bg4); border-radius: 100px; cursor: pointer;
+  border: 1px solid var(--border2); transition: background 0.2s;
+}
+.toggle.on { background: var(--accent); }
+.toggle::after {
+  content: ''; position: absolute; width: 15px; height: 15px;
+  background: #fff; border-radius: 50%; top: 2px; left: 2px;
+  transition: transform 0.2s;
+}
+.toggle.on::after { transform: translateX(17px); }
+
+.btn-simulate {
+  width: 100%; padding: 0.85rem; background: var(--accent);
+  color: #0a0e14; border: none; border-radius: 8px; font-size: 0.95rem;
+  font-weight: 600; font-family: var(--font-body); cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s; letter-spacing: 0.01em;
+  margin-top: 0.5rem;
+}
+.btn-simulate:hover { opacity: 0.9; }
+.btn-simulate:active { transform: scale(0.98); }
+.btn-simulate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Results */
+.results-panel { display: none; }
+.results-panel.visible { display: block; }
+
+.score-ring-wrap { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; }
+.score-ring { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
+.score-ring canvas { width: 110px !important; height: 110px !important; }
+.score-num {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-family: var(--font-display); font-size: 1.6rem;
+  color: var(--text); text-align: center; line-height: 1;
+}
+.score-num small { display: block; font-family: var(--font-body); font-size: 0.65rem; color: var(--text3); font-weight: 400; margin-top: 2px; }
+.score-meta { flex: 1; }
+.score-meta h4 { font-size: 0.85rem; font-weight: 500; margin-bottom: 0.4rem; }
+.score-meta p { font-size: 0.8rem; color: var(--text2); line-height: 1.5; }
+
+.metric-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+.metric-card {
+  background: var(--bg3); border-radius: 10px; padding: 0.9rem;
+  border: 1px solid var(--border);
+}
+.metric-val { font-family: var(--font-display); font-size: 1.6rem; line-height: 1; }
+.metric-label { font-size: 0.72rem; color: var(--text3); margin-top: 4px; }
+.val-red { color: var(--red); }
+.val-gold { color: var(--gold); }
+.val-green { color: var(--green); }
+.val-accent { color: var(--accent); }
+
+/* Risk factors */
+.risk-list { display: flex; flex-direction: column; gap: 0.7rem; }
+.risk-item {
+  background: var(--bg3); border-radius: 10px; padding: 0.9rem 1rem;
+  border-left: 3px solid var(--red);
+  transition: transform 0.15s;
+}
+.risk-item:hover { transform: translateX(3px); }
+.risk-item.medium { border-left-color: var(--gold); }
+.risk-item.low { border-left-color: var(--text3); }
+.risk-item.positive { border-left-color: var(--green); }
+.risk-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; }
+.risk-name { font-size: 0.85rem; font-weight: 500; }
+.risk-badge {
+  font-family: var(--font-mono); font-size: 0.7rem; padding: 2px 8px;
+  border-radius: 100px; background: rgba(248,113,113,0.12); color: var(--red);
+}
+.risk-badge.medium { background: rgba(245,158,11,0.12); color: var(--gold); }
+.risk-badge.low { background: rgba(90,116,148,0.15); color: var(--text3); }
+.risk-badge.positive { background: rgba(74,222,128,0.1); color: var(--green); }
+.risk-insight { font-size: 0.78rem; color: var(--text2); line-height: 1.5; }
+
+/* Heatmap */
+.heatmap-grid { display: flex; flex-direction: column; gap: 0.5rem; }
+.heatmap-row { display: flex; align-items: center; gap: 10px; }
+.heatmap-label { font-size: 0.78rem; color: var(--text2); width: 180px; flex-shrink: 0; }
+.heatmap-bar-wrap { flex: 1; background: var(--bg3); border-radius: 4px; height: 22px; overflow: hidden; }
+.heatmap-bar {
+  height: 100%; border-radius: 4px; display: flex; align-items: center;
+  padding-left: 8px; font-size: 0.7rem; font-family: var(--font-mono);
+  font-weight: 500; transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  color: #0a0e14;
+}
+.heatmap-val { font-family: var(--font-mono); font-size: 0.75rem; min-width: 36px; text-align: right; }
+
+/* Weekly chart */
+.chart-wrap { position: relative; height: 160px; margin-top: 0.5rem; }
+
+/* Tabs */
+.tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+.tab-btn {
+  padding: 0.65rem 1.1rem; font-size: 0.82rem; font-weight: 400;
+  color: var(--text3); background: none; border: none; cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  font-family: var(--font-body); transition: color 0.2s;
+}
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* Insights quote */
+.insight-quote {
+  background: rgba(56,189,248,0.05); border: 1px solid rgba(56,189,248,0.15);
+  border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1rem;
+  font-size: 0.85rem; color: var(--text2); line-height: 1.6;
+  font-style: italic;
+}
+.insight-quote strong { color: var(--accent); font-style: normal; }
+
+/* Empty state */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 4rem 2rem; color: var(--text3); text-align: center;
+}
+.empty-icon { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.3; }
+.empty-state p { font-size: 0.875rem; }
+
+/* Loading */
+.loading { display: none; text-align: center; padding: 2rem; }
+.loading.visible { display: block; }
+.spinner {
+  width: 36px; height: 36px; border: 2px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.7s linear infinite; margin: 0 auto 1rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading p { color: var(--text3); font-size: 0.8rem; font-family: var(--font-mono); }
+
+/* Divider */
+.divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+/* Packaging recs */
+.pkg-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.pkg-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--bg3); border-radius: 8px; padding: 0.8rem;
+  font-size: 0.82rem; color: var(--text2); line-height: 1.5;
+}
+.pkg-icon { color: var(--teal); font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+/* Footer note */
+.disclaimer {
+  text-align: center; color: var(--text3); font-size: 0.75rem;
+  padding: 2rem; border-top: 1px solid var(--border); margin-top: 3rem;
+}
+
+/* How it works section */
+.how-section { background: var(--bg2); border-top: 1px solid var(--border); padding: 4rem 2rem; }
+.how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; max-width: 1100px; margin: 0 auto; }
+.how-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 1.5rem; transition: border-color 0.2s, transform 0.2s;
+}
+.how-card:hover { border-color: var(--border2); transform: translateY(-3px); }
+.how-num {
+  font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent);
+  margin-bottom: 0.75rem; letter-spacing: 0.1em;
+}
+.how-card h4 { font-size: 0.95rem; font-weight: 500; margin-bottom: 0.5rem; }
+.how-card p { font-size: 0.82rem; color: var(--text3); line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <div class="logo-mark">Φ</div>
+    <span class="logo-text">Pharma<span>Twin</span></span>
+  </div>
+  <div class="nav-links">
+    <a href="#simulator">Simulator</a>
+    <a href="/pharma-dashboard">Pharma Dashboard</a>
+    <a href="#how">How It Works</a>
+  </div>
+  <a href="/pharma-dashboard" class="nav-cta">Pharma Portal →</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">DIGITAL TWIN PLATFORM · BEHAVIORAL INTELLIGENCE</div>
+  <h1>What does this medication <em>actually</em> feel like in real life?</h1>
+  <p class="hero-sub">PharmaTwin models how real lifestyles — night shifts, Ramadan fasting, exam stress, long-haul travel — affect medication adherence, timing, and safety.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">43%</div><div class="stat-label">Night workers miss Dose 2</div></div>
+    <div class="stat"><div class="stat-num">$528B</div><div class="stat-label">Global non-adherence cost</div></div>
+    <div class="stat"><div class="stat-num">10+</div><div class="stat-label">Lifestyle friction factors</div></div>
+    <div class="stat"><div class="stat-num">5</div><div class="stat-label">Medications modeled</div></div>
+  </div>
+</section>
+
+<div class="simulator-wrap" id="simulator">
+  <div class="section-label">LIFESTYLE SIMULATION ENGINE</div>
+  <h2 class="section-title">Run a Digital Twin Simulation</h2>
+  <p class="section-sub">Select a medication and configure a patient lifestyle profile. PharmaTwin predicts real-world adherence friction.</p>
+
+  <div class="sim-grid">
+    <!-- Left: Config Panel -->
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-dot"></div>
+          <h3>Medication &amp; Lifestyle Profile</h3>
+        </div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label class="form-label">Medication</label>
+            <select class="form-select" id="med-select">
+              {% for key, med in medications.items() %}
+              <option value="{{ key }}">{{ med.name }} — {{ med.type }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="form-group">
+            <label class="form-label">Work Schedule</label>
+            <select class="form-select" id="work-schedule">
+              <option value="standard">Standard (9-5)</option>
+              <option value="night_shift">Night Shift</option>
+              <option value="irregular">Irregular / Shift Work</option>
+              <option value="freelance">Freelance / Remote</option>
+              <option value="student">Student</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Sleep Hours / Night</label>
+            <div class="range-row">
+              <input type="range" min="4" max="10" value="7" step="0.5" id="sleep-hours" oninput="document.getElementById('sleep-val').textContent=this.value">
+              <span class="range-val" id="sleep-val">7</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Stress Level (1–10)</label>
+            <div class="range-row">
+              <input type="range" min="1" max="10" value="5" step="1" id="stress" oninput="document.getElementById('stress-val').textContent=this.value">
+              <span class="range-val" id="stress-val">5</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Coffee / Caffeine (cups/day)</label>
+            <div class="range-row">
+              <input type="range" min="0" max="10" value="2" step="1" id="caffeine" oninput="document.getElementById('caff-val').textContent=this.value">
+              <span class="range-val" id="caff-val">2</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Alcohol (drinks/week)</label>
+            <div class="range-row">
+              <input type="range" min="0" max="21" value="3" step="1" id="alcohol" oninput="document.getElementById('alc-val').textContent=this.value">
+              <span class="range-val" id="alc-val">3</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Exercise (days/week)</label>
+            <div class="range-row">
+              <input type="range" min="0" max="7" value="3" step="1" id="exercise" oninput="document.getElementById('ex-val').textContent=this.value">
+              <span class="range-val" id="ex-val">3</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Travel Days / Month</label>
+            <div class="range-row">
+              <input type="range" min="0" max="20" value="4" step="1" id="travel" oninput="document.getElementById('trav-val').textContent=this.value">
+              <span class="range-val" id="trav-val">4</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Screen Time (hrs/day)</label>
+            <div class="range-row">
+              <input type="range" min="1" max="16" value="6" step="1" id="screen" oninput="document.getElementById('scr-val').textContent=this.value">
+              <span class="range-val" id="scr-val">6</span>
+            </div>
+          </div>
+
+          <div class="toggle-row">
+            <span class="toggle-label">Practices Religious Fasting</span>
+            <div class="toggle" id="fasting-toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+
+          <button class="btn-simulate" id="run-btn" onclick="runSimulation()">
+            ⟳ Run Lifestyle Simulation
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Results -->
+    <div>
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Simulating lifestyle twin...</p>
+      </div>
+
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">◎</div>
+        <p>Configure a lifestyle profile and run a simulation<br>to see real-world adherence predictions.</p>
+      </div>
+
+      <div class="results-panel" id="results">
+        <!-- Score -->
+        <div class="panel" style="margin-bottom: 1rem;">
+          <div class="panel-body">
+            <div class="score-ring-wrap">
+              <div class="score-ring">
+                <canvas id="score-chart"></canvas>
+                <div class="score-num" id="score-num">—<small>adherence</small></div>
+              </div>
+              <div class="score-meta">
+                <h4 id="score-headline">Lifestyle Adherence Score</h4>
+                <p id="score-desc">Run a simulation to see results.</p>
+              </div>
+            </div>
+            <div class="metric-strip">
+              <div class="metric-card">
+                <div class="metric-val val-red" id="missed-doses">—</div>
+                <div class="metric-label">Missed doses / month</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-val val-gold" id="risk-count">—</div>
+                <div class="metric-label">Friction factors</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-val val-accent" id="usability-score">—</div>
+                <div class="metric-label">Usability score</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="panel">
+          <div class="panel-body">
+            <div class="tab-bar">
+              <button class="tab-btn active" onclick="switchTab('friction')">Friction Factors</button>
+              <button class="tab-btn" onclick="switchTab('weekly')">Weekly Pattern</button>
+              <button class="tab-btn" onclick="switchTab('demo')">Demographic Heatmap</button>
+              <button class="tab-btn" onclick="switchTab('packaging')">Packaging Intel</button>
+            </div>
+
+            <div class="tab-pane active" id="tab-friction">
+              <div id="friction-quote" class="insight-quote" style="display:none;"></div>
+              <div class="risk-list" id="risk-list"></div>
+            </div>
+
+            <div class="tab-pane" id="tab-weekly">
+              <div class="chart-wrap">
+                <canvas id="weekly-chart" role="img" aria-label="Weekly adherence pattern by day of week"></canvas>
+              </div>
+            </div>
+
+            <div class="tab-pane" id="tab-demo">
+              <p style="font-size:0.8rem; color:var(--text3); margin-bottom:1rem;">Simulated adherence rates across demographic groups for this medication class.</p>
+              <div class="heatmap-grid" id="heatmap-grid"></div>
+            </div>
+
+            <div class="tab-pane" id="tab-packaging">
+              <p style="font-size:0.8rem; color:var(--text2); margin-bottom:1rem; line-height:1.6;">Based on the detected friction patterns, PharmaTwin recommends the following packaging and delivery improvements:</p>
+              <div class="pkg-list" id="pkg-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- How it works -->
+<section class="how-section" id="how">
+  <div style="max-width: 1100px; margin: 0 auto;">
+    <div class="section-label" style="text-align:center;">HOW IT WORKS</div>
+    <h2 class="section-title" style="text-align:center; font-family: var(--font-display); font-size: 2rem; margin-bottom: 0.5rem;">Behavioral Intelligence for Pharmaceuticals</h2>
+    <p style="text-align:center; color:var(--text2); font-size:0.95rem; margin-bottom:2.5rem;">Four layers that transform clinical data into real-world usability intelligence.</p>
+    <div class="how-grid">
+      <div class="how-card">
+        <div class="how-num">01 — LIFESTYLE ENGINE</div>
+        <h4>Life Graph Modeling</h4>
+        <p>Captures work schedules, sleep patterns, diet, travel frequency, fasting habits, exercise, and social stress into a behavioral life graph.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">02 — SIMULATION</div>
+        <h4>Medication Twin</h4>
+        <p>Runs the medication through the life graph — predicting dose conflicts, timing instability, interaction risks, and likely abandonment points.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">03 — PHARMA DASHBOARD</div>
+        <h4>Demographic Friction Maps</h4>
+        <p>Aggregates simulations across demographic profiles to reveal high-risk subgroups — night workers, fasting populations, frequent travelers.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">04 — PACKAGING INTEL</div>
+        <h4>Delivery Optimization</h4>
+        <p>Recommends blister redesigns, dosing timing changes, smart label innovations, and patient education updates based on detected friction patterns.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="disclaimer">
+  PharmaTwin is a simulation and intelligence platform. All outputs are predictive models for research purposes and do not constitute medical advice. · Built for pharmaceutical behavioral intelligence.
+</div>
+
+<script>
+let scoreChart = null;
+let weeklyChart = null;
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function getAdherenceColor(score) {
+  if (score >= 80) return '#4ade80';
+  if (score >= 65) return '#f59e0b';
+  return '#f87171';
+}
+
+function runSimulation() {
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  btn.textContent = 'Simulating...';
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('results').classList.remove('visible');
+  document.getElementById('loading').classList.add('visible');
+
+  const payload = {
+    medication: document.getElementById('med-select').value,
+    lifestyle: {
+      work_schedule: document.getElementById('work-schedule').value,
+      sleep_hours: parseFloat(document.getElementById('sleep-hours').value),
+      stress_level: parseInt(document.getElementById('stress').value),
+      caffeine_cups: parseInt(document.getElementById('caffeine').value),
+      alcohol_drinks_week: parseInt(document.getElementById('alcohol').value),
+      exercise_days: parseInt(document.getElementById('exercise').value),
+      travel_days_month: parseInt(document.getElementById('travel').value),
+      screen_time_hours: parseInt(document.getElementById('screen').value),
+      fasting_practice: document.getElementById('fasting-toggle').classList.contains('on'),
+    }
+  };
+
+  fetch('/simulate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('loading').classList.remove('visible');
+    document.getElementById('results').classList.add('visible');
+    renderResults(data);
+    btn.disabled = false;
+    btn.textContent = '⟳ Run Lifestyle Simulation';
+  })
+  .catch(() => {
+    document.getElementById('loading').classList.remove('visible');
+    document.getElementById('empty-state').style.display = '';
+    btn.disabled = false;
+    btn.textContent = '⟳ Run Lifestyle Simulation';
+  });
+}
+
+function renderResults(data) {
+  const score = data.adherence_score;
+  const color = getAdherenceColor(score);
+
+  document.getElementById('score-num').innerHTML = score + '<small>adherence</small>';
+  document.getElementById('missed-doses').textContent = data.missed_doses_monthly;
+  document.getElementById('risk-count').textContent = data.risk_factors.length;
+  document.getElementById('usability-score').textContent = Math.max(0, data.usability_score).toFixed(0);
+
+  let headline = score >= 80 ? 'Good Real-World Adherence' : score >= 65 ? 'Moderate Adherence Risk' : 'Critical Adherence Barrier';
+  document.getElementById('score-headline').textContent = headline;
+  document.getElementById('score-desc').textContent =
+    `This lifestyle profile predicts ${score}% adherence — meaning ~${data.missed_doses_monthly} missed doses per month. ${data.risk_factors.length} friction factors detected.`;
+
+  // Score donut
+  if (scoreChart) scoreChart.destroy();
+  scoreChart = new Chart(document.getElementById('score-chart'), {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [score, 100 - score],
+        backgroundColor: [color, '#1a2333'],
+        borderWidth: 0,
+        circumference: 280,
+        rotation: -140,
+      }]
+    },
+    options: {
+      responsive: false, maintainAspectRatio: false, cutout: '82%',
+      plugins: { legend: { display: false }, tooltip: { enabled: false } }
+    }
+  });
+
+  // Risk factors
+  const riskList = document.getElementById('risk-list');
+  riskList.innerHTML = '';
+  const allFactors = [...data.risk_factors, ...data.positive_factors];
+  if (allFactors.length === 0) {
+    riskList.innerHTML = '<p style="color:var(--text3); font-size:0.85rem; text-align:center; padding:2rem;">No significant friction factors detected for this lifestyle profile.</p>';
+  }
+  allFactors.forEach(f => {
+    const cls = f.severity === 'positive' ? 'positive' : f.severity;
+    const sign = f.impact > 0 ? '+' : '';
+    riskList.innerHTML += `
+      <div class="risk-item ${cls}">
+        <div class="risk-header">
+          <span class="risk-name">${f.factor}</span>
+          <span class="risk-badge ${cls}">${sign}${f.impact}%</span>
+        </div>
+        <div class="risk-insight">${f.insight}</div>
+      </div>`;
+  });
+
+  // Friction events quote
+  const quoteEl = document.getElementById('friction-quote');
+  if (data.friction_events && data.friction_events.length > 0) {
+    quoteEl.style.display = '';
+    quoteEl.innerHTML = '<strong>Detected friction events:</strong> ' + data.friction_events.join(' · ');
+  } else {
+    quoteEl.style.display = 'none';
+  }
+
+  // Weekly chart
+  if (weeklyChart) weeklyChart.destroy();
+  const days = data.weekly_pattern.map(d => d.day);
+  const vals = data.weekly_pattern.map(d => Math.round(d.adherence * 100));
+  weeklyChart = new Chart(document.getElementById('weekly-chart'), {
+    type: 'bar',
+    data: {
+      labels: days,
+      datasets: [{
+        label: 'Adherence %',
+        data: vals,
+        backgroundColor: vals.map(v => v >= 80 ? 'rgba(74,222,128,0.7)' : v >= 65 ? 'rgba(245,158,11,0.7)' : 'rgba(248,113,113,0.7)'),
+        borderRadius: 6, borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min: 0, max: 100, ticks: { color: '#5a7494', font: { size: 11 } }, grid: { color: 'rgba(99,179,237,0.06)' } },
+        x: { ticks: { color: '#5a7494', font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Heatmap
+  const heatmapGrid = document.getElementById('heatmap-grid');
+  heatmapGrid.innerHTML = '';
+  data.demographic_heatmap.forEach(item => {
+    const pct = item.adherence;
+    const barColor = pct >= 75 ? '#4ade80' : pct >= 60 ? '#f59e0b' : '#f87171';
+    heatmapGrid.innerHTML += `
+      <div class="heatmap-row">
+        <span class="heatmap-label">${item.group}</span>
+        <div class="heatmap-bar-wrap">
+          <div class="heatmap-bar" style="width:${pct}%; background:${barColor};">${pct >= 35 ? pct + '%' : ''}</div>
+        </div>
+        <span class="heatmap-val" style="color:${barColor}">${pct}%</span>
+      </div>`;
+  });
+
+  // Packaging recommendations
+  const pkgList = document.getElementById('pkg-list');
+  pkgList.innerHTML = '';
+  const recs = [
+    'Add second-dose reminder blister with time-window indicator',
+    'Design travel-ready mini-pack (5-day supply) for frequent travelers',
+    'Include cultural dosing guide card for Ramadan and fasting periods',
+    'Color-code AM/PM doses with distinct foil colors',
+    'Add NFC smart label linking to personalized dosing schedule app',
+    'Include meal-timing infographic on inner blister lid',
+  ];
+  recs.forEach(r => {
+    pkgList.innerHTML += `<div class="pkg-item"><span class="pkg-icon">◈</span><span>${r}</span></div>`;
+  });
+}
+</script>
+</body>
+</html>
