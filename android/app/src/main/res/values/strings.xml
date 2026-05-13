@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PharmaTwin</string>
+    <string name="title_activity_main">PharmaTwin</string>
+    <string name="package_name">com.pharmatwin.app</string>
+    <string name="custom_url_scheme">com.pharmatwin.app</string>
+</resources>
