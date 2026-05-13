@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "PharmaTwin"
+version = "1.0.0"
+id = "artifacts/pharmatwin"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19188
+
+[services.development]
+run = "pnpm --filter @workspace/pharmatwin run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/pharmatwin", "run", "build" ]
+publicDir = "artifacts/pharmatwin/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19188"
+BASE_PATH = "/"

@@ -198,15 +198,18 @@ def simulate_adherence(med_id, lifestyle_data):
     friction_events = []
 
     if work_schedule == "night_shift":
-        friction_events.append("Dose 2 missed during sleep window (post-shift)")
+        friction_events.append(
+            "Dose 2 missed during sleep window (post-shift)")
     if fasting:
         friction_events.append("Timing shift during fasting period")
     if travel > 6:
         friction_events.append("Time zone-induced dosing gaps")
     if caffeine > 4 and "caffeine_excess" in med.get("conflicts", []):
-        friction_events.append("Caffeine interaction symptoms → self-discontinuation risk")
+        friction_events.append(
+            "Caffeine interaction symptoms → self-discontinuation risk")
     if stress > 7:
-        friction_events.append("Stress-period dose forgetting (exams, deadlines)")
+        friction_events.append(
+            "Stress-period dose forgetting (exams, deadlines)")
 
     weekly_pattern = []
     for day in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]:
@@ -300,4 +303,4 @@ def medication_overview(med_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(host="0.0.0.0", port=5000)

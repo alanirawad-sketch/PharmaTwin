@@ -1,0 +1,574 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: PharmaTwin API - Digital Twin Platform for Medication Reality Simulation
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: medications
+    description: Medication management
+  - name: profiles
+    description: Lifestyle profile management
+  - name: simulations
+    description: Medication simulation runs
+  - name: insights
+    description: Adherence insights and analytics
+  - name: recommendations
+    description: AI packaging and dosing recommendations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /medications:
+    get:
+      operationId: listMedications
+      tags: [medications]
+      summary: List all medications
+      responses:
+        "200":
+          description: List of medications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Medication"
+    post:
+      operationId: createMedication
+      tags: [medications]
+      summary: Create a new medication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMedicationBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Medication"
+
+  /medications/{id}:
+    get:
+      operationId: getMedication
+      tags: [medications]
+      summary: Get a medication by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Medication
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Medication"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteMedication
+      tags: [medications]
+      summary: Delete a medication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /profiles:
+    get:
+      operationId: listProfiles
+      tags: [profiles]
+      summary: List all lifestyle profiles
+      responses:
+        "200":
+          description: List of profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LifestyleProfile"
+    post:
+      operationId: createProfile
+      tags: [profiles]
+      summary: Create a lifestyle profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProfileBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LifestyleProfile"
+
+  /profiles/{id}:
+    get:
+      operationId: getProfile
+      tags: [profiles]
+      summary: Get a lifestyle profile by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LifestyleProfile"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteProfile
+      tags: [profiles]
+      summary: Delete a lifestyle profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /simulations:
+    get:
+      operationId: listSimulations
+      tags: [simulations]
+      summary: List all simulations
+      responses:
+        "200":
+          description: List of simulations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Simulation"
+    post:
+      operationId: createSimulation
+      tags: [simulations]
+      summary: Run a new simulation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSimulationBody"
+      responses:
+        "201":
+          description: Simulation started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Simulation"
+
+  /simulations/{id}:
+    get:
+      operationId: getSimulation
+      tags: [simulations]
+      summary: Get simulation with results
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Simulation with results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulationWithResults"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /insights:
+    get:
+      operationId: listInsights
+      tags: [insights]
+      summary: List adherence insights, optionally filtered by simulation
+      parameters:
+        - name: simulationId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of insights
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdherenceInsight"
+
+  /recommendations:
+    get:
+      operationId: listRecommendations
+      tags: [recommendations]
+      summary: List packaging and dosing recommendations, optionally filtered by simulation
+      parameters:
+        - name: simulationId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of recommendations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recommendation"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [insights]
+      summary: Get high-level dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/friction-heatmap:
+    get:
+      operationId: getFrictionHeatmap
+      tags: [insights]
+      summary: Get demographic friction heatmap data across all simulations
+      responses:
+        "200":
+          description: Heatmap data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FrictionHeatmapEntry"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    Medication:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        drugClass:
+          type: string
+        halfLifeHours:
+          type: number
+        dosingFrequency:
+          type: string
+        description:
+          type: string
+        indications:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, drugClass, halfLifeHours, dosingFrequency, description, indications, createdAt]
+
+    CreateMedicationBody:
+      type: object
+      properties:
+        name:
+          type: string
+        drugClass:
+          type: string
+        halfLifeHours:
+          type: number
+        dosingFrequency:
+          type: string
+        description:
+          type: string
+        indications:
+          type: string
+      required: [name, drugClass, halfLifeHours, dosingFrequency, description, indications]
+
+    LifestyleProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        workSchedule:
+          type: string
+          enum: [day_shift, night_shift, irregular, remote, student, retired]
+        sleepHours:
+          type: number
+        dietType:
+          type: string
+          enum: [omnivore, vegetarian, vegan, keto, fasting, halal, kosher]
+        exerciseFrequency:
+          type: string
+          enum: [none, light, moderate, heavy, athlete]
+        caffeineIntake:
+          type: string
+          enum: [none, light, moderate, heavy]
+        smokingStatus:
+          type: string
+          enum: [never, former, current]
+        fastingPractice:
+          type: string
+          enum: [none, intermittent, ramadan, religious_other]
+        travelFrequency:
+          type: string
+          enum: [none, occasional, frequent, very_frequent]
+        stressLevel:
+          type: string
+          enum: [low, moderate, high, very_high]
+        demographicGroup:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, workSchedule, sleepHours, dietType, exerciseFrequency, caffeineIntake, smokingStatus, fastingPractice, travelFrequency, stressLevel, demographicGroup, createdAt]
+
+    CreateProfileBody:
+      type: object
+      properties:
+        name:
+          type: string
+        workSchedule:
+          type: string
+          enum: [day_shift, night_shift, irregular, remote, student, retired]
+        sleepHours:
+          type: number
+        dietType:
+          type: string
+          enum: [omnivore, vegetarian, vegan, keto, fasting, halal, kosher]
+        exerciseFrequency:
+          type: string
+          enum: [none, light, moderate, heavy, athlete]
+        caffeineIntake:
+          type: string
+          enum: [none, light, moderate, heavy]
+        smokingStatus:
+          type: string
+          enum: [never, former, current]
+        fastingPractice:
+          type: string
+          enum: [none, intermittent, ramadan, religious_other]
+        travelFrequency:
+          type: string
+          enum: [none, occasional, frequent, very_frequent]
+        stressLevel:
+          type: string
+          enum: [low, moderate, high, very_high]
+        demographicGroup:
+          type: string
+      required: [name, workSchedule, sleepHours, dietType, exerciseFrequency, caffeineIntake, smokingStatus, fastingPractice, travelFrequency, stressLevel, demographicGroup]
+
+    Simulation:
+      type: object
+      properties:
+        id:
+          type: integer
+        medicationId:
+          type: integer
+        profileId:
+          type: integer
+        status:
+          type: string
+          enum: [pending, running, complete, failed]
+        adherenceScore:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: [id, medicationId, profileId, status, createdAt]
+
+    CreateSimulationBody:
+      type: object
+      properties:
+        medicationId:
+          type: integer
+        profileId:
+          type: integer
+      required: [medicationId, profileId]
+
+    SimulationWithResults:
+      type: object
+      properties:
+        id:
+          type: integer
+        medicationId:
+          type: integer
+        profileId:
+          type: integer
+        status:
+          type: string
+          enum: [pending, running, complete, failed]
+        adherenceScore:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        medication:
+          $ref: "#/components/schemas/Medication"
+        profile:
+          $ref: "#/components/schemas/LifestyleProfile"
+        insights:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdherenceInsight"
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Recommendation"
+      required: [id, medicationId, profileId, status, createdAt, medication, profile, insights, recommendations]
+
+    AdherenceInsight:
+      type: object
+      properties:
+        id:
+          type: integer
+        simulationId:
+          type: integer
+        category:
+          type: string
+          enum: [timing_conflict, food_interaction, missed_dose, sleep_disruption, travel_impact, fasting_conflict, stress_impact, social_inconvenience, substance_interaction]
+        title:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [low, moderate, high, critical]
+        affectedPercentage:
+          type: number
+      required: [id, simulationId, category, title, description, severity, affectedPercentage]
+
+    Recommendation:
+      type: object
+      properties:
+        id:
+          type: integer
+        simulationId:
+          type: integer
+        type:
+          type: string
+          enum: [packaging, dosage_timing, notification, label_design, patient_education, travel_packaging]
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high]
+      required: [id, simulationId, type, title, description, priority]
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalMedications:
+          type: integer
+        totalProfiles:
+          type: integer
+        totalSimulations:
+          type: integer
+        completedSimulations:
+          type: integer
+        averageAdherenceScore:
+          type: number
+        topAdherenceRisk:
+          type: string
+        totalInsights:
+          type: integer
+        totalRecommendations:
+          type: integer
+      required: [totalMedications, totalProfiles, totalSimulations, completedSimulations, averageAdherenceScore, topAdherenceRisk, totalInsights, totalRecommendations]
+
+    FrictionHeatmapEntry:
+      type: object
+      properties:
+        demographicGroup:
+          type: string
+        category:
+          type: string
+        frictionScore:
+          type: number
+        simulationCount:
+          type: integer
+      required: [demographicGroup, category, frictionScore, simulationCount]
